@@ -1,7 +1,7 @@
 {
   "name": "hls-proxy-server",
   "version": "1.0.0",
-  "description": "A proxy server for streaming HLS content with Video.js",
+  "description": "A proxy server for streaming HLS content with Video.j",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
