@@ -1,0 +1,25 @@
+{
+  "name": "hls-proxy-server",
+  "version": "1.0.0",
+  "description": "A proxy server for streaming HLS content with Video.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "compression": "^1.7.4",
+    "express": "^4.21.0",
+    "morgan": "^1.10.0",
+    "node-cache": "^5.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
