@@ -1,7 +1,10 @@
 {
-  "name": "netlify-hls-proxy",
+  "name": "m3u8-proxy-netlify",
   "version": "1.0.0",
   "dependencies": {
-    "http": "^0.0.1-security"
+    "node-fetch": "^2.6.7"
+  },
+  "scripts": {
+    "start": "node functions/proxy.js"
   }
 }
