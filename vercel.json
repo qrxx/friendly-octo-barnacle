@@ -1,15 +1,7 @@
 {
-  "version": 2,
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/[...path].js",
-      "continue": true
-    },
-    {
-      "src": "/([^/]+)/(.*)",
-      "dest": "/api/[...path].js?path=$1/$2",
-      "continue": true
-    }
-  ]
+  "name": "netlify-proxy",
+  "version": "1.0.0",
+  "engines": {
+    "node": "14.x"
+  }
 }
