@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/[channel]/[...subPath].js",
-      "use": "@vercel/node"
-    }
-  ],
   "routes": [
     {
-      "src": "/([^/]+)/(.+)",
-      "dest": "/api/[channel]/[...subPath].js"
+      "src": "/api/(.*)",
+      "dest": "/api/[...path].js",
+      "continue": true
+    },
+    {
+      "src": "/([^/]+)/(.*)",
+      "dest": "/api/[...path].js?path=$1/$2",
+      "continue": true
     }
   ]
 }
