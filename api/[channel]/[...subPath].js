@@ -1,42 +1,46 @@
-const fetch = require('node-fetch');
+const http = require('http');
+const https = require('https');
 
 module.exports = async (req, res) => {
+  // Extract the full path from the request
+  const path = req.query.path.join('/');
+  
+  // Get the channel (first part of path) and remaining path
+  const [channel, ...rest] = path.split('/');
+  const subPath = rest.join('/');
+  
+  // Your target server URL (can be made configurable)
+  const targetUrl = `http://145.239.19.149:9300/${channel}/${subPath}`;
+  
+  // Choose the appropriate protocol module
+  const protocol = targetUrl.startsWith('https') ? https : http;
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Access-Control-Max-Age', '86400');
     res.status(200).end();
     return;
   }
-
-  // Extract channel and subPath from req.params
-  const { channel, subPath } = req.params;
-
-  // Construct the target URL
-  const targetUrl = `http://145.239.19.149:9300/${channel}/${subPath}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
-
-  try {
-    // Forward the request to the origin server
-    const response = await fetch(targetUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      },
+  
+  // Forward the request to the origin server
+  return new Promise((resolve) => {
+    protocol.get(targetUrl, (response) => {
+      // Set appropriate headers
+      res.setHeader('Content-Type', response.headers['content-type'] || 'application/vnd.apple.mpegurl');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      // Pipe the response to the client
+      response.pipe(res);
+      response.on('end', resolve);
+    }).on('error', (err) => {
+      console.error(`Error fetching ${targetUrl}: ${err.message}`);
+      res.status(500).send('Error fetching the stream');
+      resolve();
     });
-
-    // Set headers from the origin response
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/vnd.apple.mpegurl');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Cache-Control', 'no-cache');
-
-    // Stream the response body
-    response.body.pipe(res);
-  } catch (error) {
-    console.error(`Error fetching ${targetUrl}: ${error.message}`);
-    res.status(500).send('Error fetching the stream');
-  }
+  });
 };
