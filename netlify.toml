@@ -1,15 +1,4 @@
 [build]
+  command = "npm install"
   functions = "netlify/functions"
-
-[[redirects]]
-  from = "/proxy/:channel/*"
-  to = "/.netlify/functions/proxy/:channel/:splat"
-  status = 200
-  force = true
-
-# Handle the case without additional path segments
-[[redirects]]
-  from = "/proxy/:channel"
-  to = "/.netlify/functions/proxy/:channel"
-  status = 200
-  force = true
+  publish = "public"
