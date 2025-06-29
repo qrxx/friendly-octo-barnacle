@@ -11,8 +11,10 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Extract channel and path from URL
-  const { channel, 0: subPath } = req.params;
+  // Extract channel and subPath from req.params
+  const { channel, subPath } = req.params;
+
+  // Construct the target URL
   const targetUrl = `http://145.239.19.149:9300/${channel}/${subPath}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
 
   try {
