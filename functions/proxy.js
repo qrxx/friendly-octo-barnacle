@@ -11,25 +11,27 @@ exports.handler = async function (event, context) {
   }
 
   const targetUrl = `http://145.239.19.149:9300/${channel}/${path}`;
-  console.log(`Fetching: ${targetUrl}`); // Log for debugging
+  console.log(`Fetching: ${targetUrl}`);
 
   try {
     const response = await fetch(targetUrl, {
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': '*/*',
+        'Accept': 'video/mp2t, application/vnd.apple.mpegurl, */*',
         'Connection': 'keep-alive',
+        'Referer': 'https://telewizjada.xyz', // Match your site’s referer
+        'Origin': 'https://telewizjada.xyz', // Add Origin for stricter servers
       },
-      // Increase timeout for .ts files
       timeout: 10000, // 10 seconds
     });
 
     if (!response.ok) {
-      console.error(`Upstream error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Upstream error: ${response.status} ${response.statusText}, Body: ${errorText}`);
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: `Upstream error: ${response.statusText}` }),
+        body: JSON.stringify({ error: `Upstream error: ${response.statusText}`, details: errorText }),
       };
     }
 
@@ -46,7 +48,7 @@ exports.handler = async function (event, context) {
         'Cache-Control': path.endsWith('.ts') ? 'public, max-age=86400' : 'no-cache',
       },
       body: path.endsWith('.ts') ? body : body.toString('utf-8'),
-      isBase64Encoded: path.endsWith('.ts'), // Stream .ts files as binary
+      isBase64Encoded: path.endsWith('.ts'),
     };
   } catch (error) {
     console.error(`Error fetching ${targetUrl}: ${error.message}`);
