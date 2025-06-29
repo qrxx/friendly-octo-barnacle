@@ -1,2 +1,4 @@
 [build]
   functions = "functions"
+  # Explicitly set no publish directory since we only use functions
+  publish = ""
