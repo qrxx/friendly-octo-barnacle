@@ -1,32 +1,40 @@
-const http = require('http');
+const fetch = require('node-fetch');
 
-module.exports = (req, res) => {
-  const { channel, path } = req.query; // Extract channel and path from query params
-  if (!channel || !path) {
-    return res.status(400).json({ error: 'Missing channel or path' });
-  }
-
-  const targetUrl = `http://146.59.54.154/${channel}/${path}`;
-
-  // Handle CORS preflight
+module.exports = async (req, res) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
-    return res.status(200).end();
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.status(200).end();
+    return;
   }
 
-  // Forward the request
-  http.get(targetUrl, (response) => {
-    res.setHeader('Content-Type', response.headers['content-type'] || 'application/vnd.apple.mpegurl');
+  // Extract channel and path from URL
+  const { channel, 0: subPath } = req.params;
+  const targetUrl = `http://145.239.19.149:9300/${channel}/${subPath}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
+
+  try {
+    // Forward the request to the origin server
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+    });
+
+    // Set headers from the origin response
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/vnd.apple.mpegurl');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Cache-Control', 'no-cache');
 
-    response.pipe(res);
-  }).on('error', (err) => {
-    console.error(`Error fetching ${targetUrl}: ${err.message}`);
-    res.status(500).json({ error: 'Error fetching the stream' });
-  });
+    // Stream the response body
+    response.body.pipe(res);
+  } catch (error) {
+    console.error(`Error fetching ${targetUrl}: ${error.message}`);
+    res.status(500).send('Error fetching the stream');
+  }
 };
