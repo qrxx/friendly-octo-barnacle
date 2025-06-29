@@ -1,24 +1,22 @@
 const http = require('http');
-const { parse } = require('url');
 
 exports.handler = async (event, context) => {
-  const { path } = event;
+  // Extract path after '/.netlify/functions/proxy'
+  let path = event.path.replace(/^\/\.netlify\/functions\/proxy\/?/, '');
   
-  // Extract channel and path from URL like /.netlify/functions/proxy/:channel/*
-  const pathParts = path.split('/').filter(Boolean);
-  if (pathParts.length < 4) {
+  // Handle empty path
+  if (!path) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid URL format' })
+      body: JSON.stringify({ error: 'Missing channel parameter' })
     };
   }
-  
-  const channel = pathParts[3];
-  const restPath = pathParts.slice(4).join('/');
-  
-  const targetUrl = `http://146.59.54.154/${channel}/${restPath}`;
 
-  // Handle CORS headers
+  const [channel, ...rest] = path.split('/');
+  const restPath = rest.join('/');
+  const targetUrl = `http://145.239.19.149:9300/${channel}/${restPath}`;
+
+  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -27,22 +25,15 @@ exports.handler = async (event, context) => {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
-  // Proxy the request
   return new Promise((resolve) => {
     http.get(targetUrl, (proxyRes) => {
       let data = [];
-      
       proxyRes.on('data', chunk => data.push(chunk));
       proxyRes.on('end', () => {
         headers['Content-Type'] = proxyRes.headers['content-type'] || 'application/vnd.apple.mpegurl';
-        
         resolve({
           statusCode: proxyRes.statusCode || 200,
           headers,
@@ -50,11 +41,10 @@ exports.handler = async (event, context) => {
         });
       });
     }).on('error', (err) => {
-      console.error(`Error fetching ${targetUrl}:`, err);
       resolve({
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: 'Error fetching the stream' })
+        body: JSON.stringify({ error: `Proxy error: ${err.message}` })
       });
     });
   });
